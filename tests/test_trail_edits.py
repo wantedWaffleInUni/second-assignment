@@ -48,6 +48,9 @@ class TestTrailMethods(unittest.TestCase):
         self.assertEqual(res3.store.top.store, None)
         self.assertEqual(res3.store.following.store, None)
 
+
+        
+
     @number("1.2")
     def test_empty(self):
         empty = Trail(None)
