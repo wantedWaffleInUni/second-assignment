@@ -21,7 +21,12 @@ class InfiniteHashTable(Generic[K, V]):
     TABLE_SIZE = 27
 
     def __init__(self) -> None:
-        raise NotImplementedError()
+        """
+        Initialise the Hash Table.
+        """
+        self.array: ArrayR[tuple[K, V]] = ArrayR(self.TABLE_SIZE)
+        self.count = 0
+        self.level = 0
 
     def hash(self, key: K) -> int:
         if self.level < len(key):
@@ -34,24 +39,67 @@ class InfiniteHashTable(Generic[K, V]):
 
         :raises KeyError: when the key doesn't exist.
         """
-        raise NotImplementedError()
-
+        position = self.hash(key)
+        if self.array[position] is None:
+            raise KeyError("Key not found")
+        else:
+            collision = self.array[position]
+            if collision[0] == key:
+                return collision[1]
+            elif isinstance(self.array[position], InfiniteHashTable):
+                return self.array[position][key]
+        
     def __setitem__(self, key: K, value: V) -> None:
         """
         Set an (key, value) pair in our hash table.
         """
-        raise NotImplementedError()
+        position = self.hash(key)
+        
+        if self.array[position] is None:
+            self.array[position] = (key, value)
 
+        elif isinstance(self.array[position], tuple):
+            collision = self.array[position]
+            self.array[position] = None
+            # Create a new hash table and insert the previous collision
+            new_table = InfiniteHashTable()
+            new_table.level = self.level + 1
+            new_table[collision[0]] = collision[1]
+            # Insert the new value into the new hash table
+            new_table[key] = value
+            self.array[position] = new_table
+
+        else:
+            self.array[position][key] = value
+        self.count += 1
+        
     def __delitem__(self, key: K) -> None:
         """
         Deletes a (key, value) pair in our hash table.
 
         :raises KeyError: when the key doesn't exist.
         """
-        raise NotImplementedError()
+        position = self.hash(key)
+
+        if self.array[position] is None:
+            raise KeyError("Key not found")
+        
+        elif isinstance(self.array[position], tuple):
+            self.array[position] = None
+            self.count -= 1
+            
+        elif isinstance(self.array[position], InfiniteHashTable):
+            del self.array[position][key]
+            self.count -= 1
+
+            if self.array[position].count == 1:
+                for i in range(len(self.array)):
+                    if self.array[position].array[i] is not None:
+                        self.array[position] = self.array[position].array[i]
+                        break
 
     def __len__(self) -> int:
-        raise NotImplementedError()
+        return self.count
 
     def __str__(self) -> str:
         """
@@ -59,7 +107,7 @@ class InfiniteHashTable(Generic[K, V]):
 
         Not required but may be a good testing tool.
         """
-        raise NotImplementedError()
+        return str(self.array)
 
     def get_location(self, key) -> list[int]:
         """
@@ -67,7 +115,22 @@ class InfiniteHashTable(Generic[K, V]):
 
         :raises KeyError: when the key doesn't exist.
         """
-        raise NotImplementedError()
+        location = [self.hash(key)]
+        current_table = self
+        position = self.hash(key)
+
+        while isinstance(current_table.array[position], InfiniteHashTable):
+            current_table = current_table.array[position]
+            position = current_table.hash(key)
+            location.append(position)
+
+        if isinstance(current_table.array[position], tuple):
+            if current_table.array[position][0] == key:
+                return location
+            else:
+                raise KeyError("Key not found")
+        raise KeyError("Key not found")
+    
 
     def __contains__(self, key: K) -> bool:
         """
@@ -86,4 +149,40 @@ class InfiniteHashTable(Generic[K, V]):
         """
         Returns all keys currently in the table in lexicographically sorted order.
         """
-        raise NotImplementedError()
+        current = current or 0
+        keys = []
+        for stuffs in self.array:
+            if stuffs is None:
+                continue
+            elif isinstance(stuffs, InfiniteHashTable):
+                current +=1
+                keys.extend(stuffs.sort_keys(current))
+            else:
+                keys.append(stuffs[0])
+        return self.quick_sort(keys)
+
+    # def insertion_sort(self,lst):
+    #     for i in range(1, len(lst)):
+    #         current = lst[i]
+    #         position = i
+    #         while position > 0 and lst[position-1] > current:
+    #             lst[position] = lst[position-1]
+    #             position -= 1
+    #         lst[position] = current
+    #     return lst
+    
+    def quick_sort(self, lst):
+        if len(lst) <= 1:
+            return lst
+        else:
+            pivot = lst[0]
+            less = []
+            greater = []
+            for item in lst[1:]:
+                if item < pivot:
+                    less.append(item)
+                else:
+                    greater.append(item)
+            return self.quick_sort(less) + [pivot] + self.quick_sort(greater)
+
+    

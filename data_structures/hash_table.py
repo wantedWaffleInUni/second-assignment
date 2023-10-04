@@ -78,8 +78,8 @@ class LinearProbeTable(Generic[K, V]):
         :raises FullError: When a table is full and cannot be inserted.
         """
         # Initial position
-        position = self.hash(key)
-
+        position = self.hash(key) 
+        
         for _ in range(self.table_size):
             if self.array[position] is None:
                 # Empty spot. Am I upserting or retrieving?

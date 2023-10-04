@@ -48,8 +48,9 @@ class TestDoubleHash(unittest.TestCase):
         dt["Tim", "Jen"] = 1
         dt["Amy", "Ben"] = 2
         dt["Tim", "Kat"] = 3
-
+        self.assertEqual(dt._linear_probe("Tim", "Jen", False), (0, 0))
         self.assertEqual(dt._linear_probe("Tim", "Kat", False), (0, 1))
+        self.assertEqual(dt._linear_probe("Amy", "Ben", False), (5, 0))
 
         del dt["Tim", "Jen"]
         # We can't do this as it would create the table.
@@ -125,10 +126,10 @@ class TestDoubleHash(unittest.TestCase):
         self.assertIn(key, ["May", "Kim"])
         value = next(value_iterator)
         self.assertIn(value, [1, 2])
-
+       
         del dt["May", "Jim"]
         del dt["Kim", "Tim"]
-
+    
         # Retrieving the next value should either raise StopIteration or crash entirely.
         # Note: Deleting from an element being iterated over is bad practice
         # We just want to make sure you aren't returning a list and are doing this
